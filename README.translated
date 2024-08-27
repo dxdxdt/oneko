@@ -1,0 +1,175 @@
+
+**Original program written by**  
+Masayuki Koba  
+**Modified by**  
+Tatsuya Kato (kato@ntts.co.jp)
+
+Previously, a program called "xneko," which runs on the X Window System and
+features a "cat," was posted on fj.sources. Unfortunately, this "cat" was
+confined to a single window and would run around chasing the mouse within that
+window.
+
+Thinking "Isn't it a bit cruel to confine the cat in a cage?" I decided to
+modify the program so that the cat could run freely across the entire screen.
+
+The name of this program is "oneko." Initially, I thought of taking the "o" from
+"oclock," but then I realized that "oclock" refers to the "o" in "o'clock" and
+not because it's round. To justify the "o" in the name, I attached "Neko runs
+Over the windows." (It's a bit of a stretch.)
+
+P.S. Please be careful not to accidentally press "n" or "m" instead of "o," as
+they are neighboring keys.
+
+This program requires the X Window System to run. It is compatible with X
+versions R3 or R4, but it uses the Shape extension introduced in R4, so if you
+run it on R3, the result will be less interesting. (It is still possible to
+compile without the Shape extension.)
+
+I have only tested it on a Sun4/330 machine and an NCD X terminal. It runs
+slowly on the X terminal, but by adjusting the parameters, you can achieve a
+decent speed on the Sun console.
+
+Please give it a try.
+
+## <Feature enhancements in this version update>
+
+◎ All options can now be specified via resources. However, instead of using Xrm
+library functions, resources are retrieved using XGetDefault (equivalent to
+X11R1 functionality), so specifying resources in application defaults
+(/usr/lib/X11/app-default) is not yet possible.
+
+◎ A feature to make the cat look like a "tiger cat" was added, which was popular
+at NTTSOFT local. By running the command:
+
+``` % oneko -tora ```
+
+The cat’s pattern changes.
+
+◎ You can now specify colors. Use the `-fg` and `-bg` options when starting the
+program.
+
+◎ When the cat is sleeping, it won't notice if the mouse moves slowly. This is
+because if the distance the mouse moves within a certain time frame does not
+exceed a certain value, the cat won't notice. You can change this "certain
+value" with an option. The default is 6, but by running:
+
+``` % oneko -idle 20 ```
+
+You will have a "more sluggish" cat.
+
+◎ It seems that using the `gcc` compiler causes issues (I've confirmed this
+myself). Therefore, in this version's Imakefile, it is forcibly set to compile
+with `cc`.
+
+◎ You can compile even without the Shape extension library. If the X you are
+using is not R4, and it is not a SONY NEWS, delete the following line from the
+Imakefile:
+
+``` DEFINES = -DSHAPE ```
+
+(I haven't tested it on NEWS. If anyone can confirm, please do.)
+
+## <How to compile>
+
+1. First, unshar this article to extract all the source files.
+
+2. Create a Makefile. Move to the oneko directory and run:
+
+``` % xmkmf ```
+
+If you don't have this command, you can also run:
+
+``` % imake -DUseInstalled -I/usr/lib/X11/config ```
+
+It's the same.
+
+3. Run `make`:
+
+``` % make ```
+
+This will create an executable "cat." If you want to put it in `/usr/bin/X11`
+for everyone to use, run:
+
+``` # make install ```
+
+(as the superuser).
+
+This concludes the compilation. Afterward, you can enjoy it by running:
+
+``` % oneko & ```
+
+## <Usage>
+
+Basically, no options are needed. However, here are some options you can use.
+All options, except for help, can also be changed via resources.
+
+- `-help`: Displays help for the options. - `-tora`: Changes the cat to a tiger
+cat. - `-time <n>`: Changes the value of the interval timer used by the cat. The
+default is 125,000 microseconds, but reducing this value makes the cat move
+faster. - `-speed <n>`: Specifies the distance the cat moves in dots each time.
+The default is 16, but increasing this value makes the cat move faster. - `-idle
+<n>`: Specifies how quickly the mouse needs to move for the cat to wake up when
+sleeping. The default is 6. - `-rv`: Reverses the colors. (This doesn't have
+much meaning on a color display since you can specify colors with `fg` and
+`bg`.) - `-noshape`: Runs without using the X Shape Extension. This increases
+the speed considerably but makes the display less interesting (try it out and
+see). - `-fg <color>`: Specifies the foreground color. This is ignored on
+monochrome displays. - `-bg <color>`: Specifies the background color. This is
+ignored on monochrome displays.
+
+Also, when installed, a symbolic link is created for "tora." When the program is
+started with the command name "tora," it behaves as if the `-tora` option was
+used by default.
+
+If specified via resources, it looks like this:
+
+``` oneko.foreground: black oneko.background: red oneko.time: 100000
+oneko.reverse: true ```
+
+If the command is executed with the name "tora" instead of "oneko," the resource
+name changes to `tora.*`, so you can separate the settings for a tiger cat and a
+regular cat:
+
+``` tora.foreground: sienna tora.background: moccasin ```
+
+By specifying this in the resources, you can set up different configurations for
+the tiger cat and the regular cat. By default, the tiger cat is black and white,
+so please add the two lines above to the resources.
+
+Additionally, the program now reads resources starting with the class name
+"Oneko," not just the command name. So, it's best to specify resources that are
+common to all cats, like speed and time, with the class name, and specify
+resources that vary by cat type (regular cat, tiger cat) with the command name
+(instance name).
+
+I initially should have used Xrm* from the start for this implementation, but
+since I didn't know about the existence of this function, I "forcibly" wrote it
+using XGetDefault.
+
+## <Bugs and future version upgrades>
+
+- I want to be able to run multiple cats simultaneously. As it stands, if you
+run two instances of oneko, they overlap since they move in the same way.
+However, if you change the `-speed` or `-time` options, they will move
+differently. Please try it out.
+  
+- Expose events occur in areas where the cat has run, causing flickering in
+applications like kterm. I tried using Save Under, but it was slow, so I gave
+up. Is there a good method for this?
+
+- The cursor changes to a mouse when it's over the root window or the cat, but
+the mouse color is just an inverted color of the cat. I could fix this quickly
+if I had time, but I left it as is because I was in a hurry. Please look forward
+to future updates.
+
+- I want to make it faster... but it might be impossible. If anyone knows a way
+to make it faster, please let me know. (I haven't tried the Map/Unmap method
+suggested by Mr. Kondo from the lab. I haven't had time.)
+
+- When working, sometimes the cat interferes with key input. Is there a way to
+ignore key input and pass it to the window below? (Despite saying that, the
+current version of the cat selects input for key events.)
+
+P.S. This is essentially public domain software, but please let me
+(kato@ntts.co.jp) know about any bug fixes or feature enhancements (even
+secretly is fine). I plan to continue upgrading it.
